@@ -316,6 +316,11 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "movie-recommender-api"}
+
+
 # ---------- HOME FEED (TMDB) ----------
 @app.get("/home", response_model=List[TMDBMovieCard])
 async def home(
@@ -474,3 +479,10 @@ async def search_bundle(
         tfidf_recommendations=tfidf_items,
         genre_recommendations=genre_recs,
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
