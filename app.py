@@ -1,10 +1,14 @@
+import os
+
 import requests
 import streamlit as st
 
 # =============================
 # CONFIG
 # =============================
-API_BASE = "https://movie-recsys-f69c.onrender.com"
+# Prefer env override, then hosted URL. Fallback to local backend when hosted is unavailable.
+API_BASE = os.getenv("API_BASE", "https://movie-recsys-f69c.onrender.com")
+API_FALLBACK_BASE = os.getenv("API_FALLBACK_BASE", "http://127.0.0.1:8000")
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
@@ -65,13 +69,27 @@ def goto_details(tmdb_id: int):
 # =============================
 @st.cache_data(ttl=30)  # short cache for autocomplete
 def api_get_json(path: str, params: dict | None = None):
-    try:
-        r = requests.get(f"{API_BASE}{path}", params=params, timeout=25)
-        if r.status_code >= 400:
-            return None, f"HTTP {r.status_code}: {r.text[:300]}"
-        return r.json(), None
-    except Exception as e:
-        return None, f"Request failed: {e}"
+    candidates = [API_BASE]
+    if API_FALLBACK_BASE and API_FALLBACK_BASE not in candidates:
+        candidates.append(API_FALLBACK_BASE)
+
+    errs = []
+    for i, base in enumerate(candidates):
+        try:
+            r = requests.get(f"{base}{path}", params=params, timeout=25)
+            if r.status_code >= 500 and i < len(candidates) - 1:
+                errs.append(f"{base} -> HTTP {r.status_code}")
+                continue
+            if r.status_code >= 400:
+                return None, f"HTTP {r.status_code}: {r.text[:300]}"
+            return r.json(), None
+        except Exception as e:
+            if i < len(candidates) - 1:
+                errs.append(f"{base} -> Request failed: {e}")
+                continue
+            return None, f"Request failed: {e}"
+
+    return None, " | ".join(errs) if errs else "Request failed"
 
 
 def poster_grid(cards, cols=6, key_prefix="grid"):
@@ -203,6 +221,9 @@ def parse_tmdb_search_to_cards(data, keyword: str, limit: int = 24):
 # =============================
 with st.sidebar:
     st.markdown("## 🎬 Menu")
+    st.caption(f"Primary API: {API_BASE}")
+    if API_FALLBACK_BASE:
+        st.caption(f"Fallback API: {API_FALLBACK_BASE}")
     if st.button("🏠 Home"):
         goto_home()
 
