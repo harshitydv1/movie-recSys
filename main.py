@@ -11,9 +11,8 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 
-# =========================
+
 # ENV
-# =========================
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 
@@ -25,9 +24,7 @@ if not TMDB_API_KEY:
     raise RuntimeError("TMDB_API_KEY missing. Put it in .env as TMDB_API_KEY=xxxx")
 
 
-# =========================
 # FASTAPI APP
-# =========================
 app = FastAPI(title="Movie Recommender API", version="3.0")
 
 app.add_middleware(
@@ -39,9 +36,8 @@ app.add_middleware(
 )
 
 
-# =========================
+
 # PICKLE GLOBALS
-# =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DF_PATH = os.path.join(BASE_DIR, "df.pkl")
@@ -57,9 +53,8 @@ tfidf_obj: Any = None
 TITLE_TO_IDX: Optional[Dict[str, int]] = None
 
 
-# =========================
+
 # MODELS
-# =========================
 class TMDBMovieCard(BaseModel):
     tmdb_id: int
     title: str
@@ -91,9 +86,8 @@ class SearchBundleResponse(BaseModel):
     genre_recommendations: List[TMDBMovieCard]
 
 
-# =========================
+
 # UTILS
-# =========================
 def _norm_title(t: str) -> str:
     return str(t).strip().lower()
 
@@ -182,9 +176,8 @@ async def tmdb_search_first(query: str) -> Optional[dict]:
     return results[0] if results else None
 
 
-# =========================
+
 # TF-IDF Helpers
-# =========================
 def build_title_to_idx_map(indices: Any) -> Dict[str, int]:
     """
     indices.pkl can be:
@@ -277,9 +270,8 @@ async def attach_tmdb_card_by_title(title: str) -> Optional[TMDBMovieCard]:
         return None
 
 
-# =========================
+
 # STARTUP: LOAD PICKLES
-# =========================
 @app.on_event("startup")
 def load_pickles():
     global df, indices_obj, tfidf_matrix, tfidf_obj, TITLE_TO_IDX
@@ -308,9 +300,8 @@ def load_pickles():
         raise RuntimeError("df.pkl must contain a DataFrame with a 'title' column")
 
 
-# =========================
 # ROUTES
-# =========================
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
