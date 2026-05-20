@@ -1,17 +1,15 @@
 import requests
 import streamlit as st
 
-# =============================
+
 # CONFIG
-# =============================
+
 API_BASE = "https://movie-rec-466x.onrender.com" or "http://127.0.0.1:8000"
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
-# =============================
-# STYLES (minimal modern)
-# =============================
+# STYLES
 st.markdown(
     """
 <style>
@@ -24,9 +22,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# =============================
+
 # STATE + ROUTING (single-file pages)
-# =============================
+
 if "view" not in st.session_state:
     st.session_state.view = "home"  # home | details
 if "selected_tmdb_id" not in st.session_state:
@@ -60,9 +58,9 @@ def goto_details(tmdb_id: int):
     st.rerun()
 
 
-# =============================
+
 # API HELPERS
-# =============================
+
 @st.cache_data(ttl=30)  # short cache for autocomplete
 def api_get_json(path: str, params: dict | None = None):
     try:
@@ -97,7 +95,7 @@ def poster_grid(cards, cols=6, key_prefix="grid"):
                 if poster:
                     st.image(poster, width="stretch")
                 else:
-                    st.write("🖼️ No poster")
+                    st.write("No poster")
 
                 if st.button("Open", key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}"):
                     if tmdb_id:
@@ -198,9 +196,8 @@ def parse_tmdb_search_to_cards(data, keyword: str, limit: int = 24):
     return suggestions, cards
 
 
-# =============================
+
 # SIDEBAR (clean)
-# =============================
 with st.sidebar:
     st.markdown("## 🎬 Menu")
     if st.button("🏠 Home"):
@@ -215,9 +212,9 @@ with st.sidebar:
     )
     grid_cols = st.slider("Grid columns", 4, 8, 6)
 
-# =============================
+
 # HEADER
-# =============================
+
 st.title("🎬 Movie Recommender")
 st.markdown(
     "<div class='small-muted'>Type keyword → dropdown suggestions + matching results → open → details + recommendations</div>",
@@ -225,9 +222,8 @@ st.markdown(
 )
 st.divider()
 
-# ==========================================================
+
 # VIEW: HOME
-# ==========================================================
 if st.session_state.view == "home":
     typed = st.text_input(
         "Search by movie title (keyword)", placeholder="Type: avenger, batman, love..."
@@ -278,9 +274,9 @@ if st.session_state.view == "home":
 
     poster_grid(home_cards, cols=grid_cols, key_prefix="home_feed")
 
-# ==========================================================
+
 # VIEW: DETAILS
-# ==========================================================
+
 elif st.session_state.view == "details":
     tmdb_id = st.session_state.selected_tmdb_id
     if not tmdb_id:
@@ -292,7 +288,7 @@ elif st.session_state.view == "details":
     # Top bar
     a, b = st.columns([3, 1])
     with a:
-        st.markdown("### 📄 Movie Details")
+        st.markdown("### Movie Details")
     with b:
         if st.button("← Back to Home"):
             goto_home()
@@ -311,7 +307,7 @@ elif st.session_state.view == "details":
         if data.get("poster_url"):
             st.image(data["poster_url"], width="stretch")
         else:
-            st.write("🖼️ No poster")
+            st.write("No poster")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
@@ -335,7 +331,7 @@ elif st.session_state.view == "details":
         st.image(data["backdrop_url"], width="stretch")
 
     st.divider()
-    st.markdown("### ✅ Recommendations")
+    st.markdown("### Recommendations")
 
     # Recommendations (TF-IDF + Genre) via your bundle endpoint
     title = (data.get("title") or "").strip()
